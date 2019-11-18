@@ -11,25 +11,17 @@ fun getTimeSliceRange(shiftBitsMillisec: Int, startTimeMillisec: Long, endTimeMi
     )
 }
 
-@Deprecated(message= "Use equivalent top-level functions instead of this class")
-class TimeSlice(private val shiftBitsMillisec: Int) {
-    @Deprecated(
-        message = "Use equivalent top-level function",
-        replaceWith = ReplaceWith(
-            expression = "getTimeSlice(shiftBitsMillisec, timestampMillisec)",
-            imports = ["org.tree_ware.cassandra.getTimeSlice"]
-        ))
-    fun getSlice(timestampMillisec: Long): Long {
-        return timestampMillisec ushr shiftBitsMillisec
+/**
+ * @param buckets: shiftBits of buckets, in ascending order. At least 1 bucket is required.
+ */
+fun getDurationBucket(buckets: List<Int>, durationMillisec: Long): Int {
+    var previousBucket = buckets[0]
+    var spillOver = durationMillisec ushr previousBucket
+    for (i in 1 until buckets.size) {
+        val bucket = buckets[i]
+        spillOver = spillOver ushr (bucket - previousBucket)
+        if (spillOver == 0L) break
+        previousBucket = bucket
     }
-
-    @Deprecated(
-        message = "Use equivalent top-level function",
-        replaceWith = ReplaceWith(
-            expression = "getTimeSliceRange(shiftBitsMillisec, startTimeMillisec, endTimeMillisec)",
-            imports = ["org.tree_ware.cassandra.getTimeSliceRange"]
-        ))
-    fun getSliceRange(startTimeMillisec: Long, endTimeMillisec: Long): LongRange {
-        return LongRange(getSlice(startTimeMillisec), getSlice(endTimeMillisec))
-    }
+    return previousBucket
 }
