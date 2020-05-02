@@ -1,25 +1,27 @@
 package org.tree_ware.cassandra.schema.map
 
-fun newAddressBookSchemaMap() = MutableSchemaMap(
-    schema = newAddressBookSchema(),
-    entities = listOf(
+import org.tree_ware.schema.core.Schema
+
+fun newAddressBookSchemaMap(schema: Schema) = MutableSchemaMap(
+    schema = schema,
+    entityMaps = listOf(
         MutableEntitySchemaMap(
-            pathKeys = listOf(
+            pathKeyMaps = listOf(
                 MutableEntityKeysSchemaMap(
                     name = "address_book",
-                    keys = listOf()
+                    keyFieldMaps = listOf()
                 )
             )
         ),
         MutableEntitySchemaMap(
-            pathKeys = listOf(
+            pathKeyMaps = listOf(
                 MutableEntityKeysSchemaMap(
                     name = "address_book",
-                    keys = listOf()
+                    keyFieldMaps = listOf()
                 ),
                 MutableEntityKeysSchemaMap(
                     name = "person",
-                    keys = listOf(
+                    keyFieldMaps = listOf(
                         MutableKeyFieldSchemaMap("id", KeyType.CLUSTERING)
                     )
                 )
@@ -27,20 +29,20 @@ fun newAddressBookSchemaMap() = MutableSchemaMap(
             usePartitionId = 1
         ),
         MutableEntitySchemaMap(
-            pathKeys = listOf(
+            pathKeyMaps = listOf(
                 MutableEntityKeysSchemaMap(
                     name = "address_book",
-                    keys = listOf()
+                    keyFieldMaps = listOf()
                 ),
                 MutableEntityKeysSchemaMap(
                     name = "person",
-                    keys = listOf(
+                    keyFieldMaps = listOf(
                         MutableKeyFieldSchemaMap("id", KeyType.PARTITION)
                     )
                 ),
                 MutableEntityKeysSchemaMap(
                     name = "relation",
-                    keys = listOf(
+                    keyFieldMaps = listOf(
                         MutableKeyFieldSchemaMap("id", KeyType.CLUSTERING)
                     )
                 )

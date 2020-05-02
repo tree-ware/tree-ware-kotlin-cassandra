@@ -6,8 +6,8 @@ import org.tree_ware.schema.core.Schema
 interface SchemaMap {
     val schema: Schema
 
-    val root: RootSchemaMap
-    val entities: List<EntitySchemaMap>
+    val rootMap: RootSchemaMap
+    val entityMaps: List<EntitySchemaMap>
 }
 
 interface RootSchemaMap {
@@ -17,7 +17,7 @@ interface RootSchemaMap {
 }
 
 interface EntitySchemaMap {
-    val pathKeys: List<EntityKeysSchemaMap>
+    val pathKeyMaps: List<EntityKeysSchemaMap>
 
     /**
      * Introduces a partition-key called `partition_id` if value is non-zero.
@@ -30,7 +30,7 @@ interface EntitySchemaMap {
 
 interface EntityKeysSchemaMap {
     val name: String
-    val keys: List<KeyFieldSchemaMap>
+    val keyFieldMaps: List<KeyFieldSchemaMap>
 }
 
 interface KeyFieldSchemaMap {
