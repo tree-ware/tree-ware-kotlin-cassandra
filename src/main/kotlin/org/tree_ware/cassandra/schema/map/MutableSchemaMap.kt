@@ -1,5 +1,6 @@
 package org.tree_ware.cassandra.schema.map
 
+import org.tree_ware.schema.core.EntityPathSchema
 import org.tree_ware.schema.core.RootSchema
 import org.tree_ware.schema.core.Schema
 
@@ -15,7 +16,7 @@ class MutableRootSchemaMap(
     override val rootSchema: RootSchema,
     keyspaceName: String? = null
 ) : RootSchemaMap {
-    override val keyspaceName = keyspaceName ?: "tw.${rootSchema.name}"
+    override val keyspaceName = "tw.$keyspaceName" ?: "tw.${rootSchema.name}"
 }
 
 class MutableEntitySchemaMap(
@@ -24,6 +25,13 @@ class MutableEntitySchemaMap(
     tableName: String? = null
 ) : EntitySchemaMap {
     override val tableName = tableName ?: getGeneratedTableName()
+
+    override var entityPathSchema: EntityPathSchema
+        get() = _entityPathSchema ?: throw IllegalStateException("Entity path schema is not resolved")
+        internal set(value) {
+            _entityPathSchema = value
+        }
+    private var _entityPathSchema: EntityPathSchema? = null
 
     private fun getGeneratedTableName(): String {
         val pathEntityNames = pathKeyMaps.map { it.name }

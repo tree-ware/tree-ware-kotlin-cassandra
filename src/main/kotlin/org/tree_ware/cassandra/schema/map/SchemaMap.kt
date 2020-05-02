@@ -1,5 +1,6 @@
 package org.tree_ware.cassandra.schema.map
 
+import org.tree_ware.schema.core.EntityPathSchema
 import org.tree_ware.schema.core.RootSchema
 import org.tree_ware.schema.core.Schema
 
@@ -20,12 +21,14 @@ interface EntitySchemaMap {
     val pathKeyMaps: List<EntityKeysSchemaMap>
 
     /**
-     * Introduces a partition-key called `partition_id` if value is non-zero.
+     * Introduces a partition-key called `_partition_id` if value is non-zero.
      * The non-zero value is the number of values for `partition_id`.
      */
     val usePartitionId: Int
 
     val tableName: String
+
+    val entityPathSchema: EntityPathSchema
 }
 
 interface EntityKeysSchemaMap {

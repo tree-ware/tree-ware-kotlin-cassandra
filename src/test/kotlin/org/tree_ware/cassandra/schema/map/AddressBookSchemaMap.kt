@@ -11,7 +11,8 @@ fun newAddressBookSchemaMap(schema: Schema) = MutableSchemaMap(
                     name = "address_book",
                     keyFieldMaps = listOf()
                 )
-            )
+            ),
+            usePartitionId = 1
         ),
         MutableEntitySchemaMap(
             pathKeyMaps = listOf(
