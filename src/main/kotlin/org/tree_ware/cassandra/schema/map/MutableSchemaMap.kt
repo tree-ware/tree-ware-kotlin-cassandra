@@ -5,34 +5,34 @@ import org.tree_ware.schema.core.*
 class MutableSchemaMap(
     override val schema: Schema,
     keyspaceName: String? = null,
-    override val entityMaps: List<MutableEntitySchemaMap>
+    override val entityPaths: List<MutableEntityPathSchemaMap>
 ) : SchemaMap {
-    override val rootMap = MutableRootSchemaMap(schema.root, keyspaceName)
+    override val root = MutableRootSchemaMap(schema.root, keyspaceName)
 }
 
 class MutableRootSchemaMap(
-    override val rootSchema: RootSchema,
+    override val schema: RootSchema,
     keyspaceName: String? = null
 ) : RootSchemaMap {
-    override val keyspaceName = if (keyspaceName != null) "tw_$keyspaceName" else "tw_${rootSchema.name}"
+    override val keyspaceName = if (keyspaceName != null) "tw_$keyspaceName" else "tw_${schema.name}"
 }
 
-class MutableEntitySchemaMap(
-    override val pathKeyMaps: List<MutableEntityKeysSchemaMap>,
-    override val usePartitionId: Int = 0,
+class MutableEntityPathSchemaMap(
+    override val pathEntities: List<MutablePathEntitySchemaMap>,
+    override val syntheticPartIdSize: Int = 1,
     tableName: String? = null
-) : EntitySchemaMap {
+) : EntityPathSchemaMap {
     override val tableName = tableName ?: getGeneratedTableName()
 
-    override var entityPathSchema: EntityPathSchema
-        get() = _entityPathSchema ?: throw IllegalStateException("Entity path schema is not resolved")
+    override var schema: EntityPathSchema
+        get() = _schema ?: throw IllegalStateException("Entity path schema is not resolved")
         internal set(value) {
-            _entityPathSchema = value
+            _schema = value
         }
-    private var _entityPathSchema: EntityPathSchema? = null
+    private var _schema: EntityPathSchema? = null
 
     private fun getGeneratedTableName(): String {
-        val pathEntityNames = pathKeyMaps.map { it.name }
+        val pathEntityNames = pathEntities.map { it.name }
         if (pathEntityNames.isEmpty()) return ""
         val lastEntityName = pathEntityNames.last()
         val initialEntityNames = pathEntityNames.dropLast(1)
@@ -44,23 +44,23 @@ class MutableEntitySchemaMap(
     }
 }
 
-class MutableEntityKeysSchemaMap(
+class MutablePathEntitySchemaMap(
     override val name: String,
-    override val keyFieldMaps: List<MutableKeyFieldSchemaMap>
-) : EntityKeysSchemaMap {
-    override var entitySchema: EntitySchema
-        get() = _entitySchema ?: throw IllegalStateException("Entity schema is not resolved")
+    override val keys: List<MutableKeyFieldSchemaMap>
+) : PathEntitySchemaMap {
+    override var schema: EntitySchema
+        get() = _schema ?: throw IllegalStateException("Entity schema is not resolved")
         internal set(value) {
-            _entitySchema = value
+            _schema = value
         }
-    private var _entitySchema: EntitySchema? = null
+    private var _schema: EntitySchema? = null
 }
 
 class MutableKeyFieldSchemaMap(override val name: String, override val type: KeyType) : KeyFieldSchemaMap {
-    override var fieldSchema: FieldSchema
-        get() = _fieldSchema ?: throw IllegalStateException("Field schema is not set")
+    override var schema: FieldSchema
+        get() = _schema ?: throw IllegalStateException("Field schema is not set")
         internal set(value) {
-            _fieldSchema = value
+            _schema = value
         }
-    private var _fieldSchema: FieldSchema? = null
+    private var _schema: FieldSchema? = null
 }

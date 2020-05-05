@@ -4,46 +4,44 @@ import org.tree_ware.schema.core.Schema
 
 fun newAddressBookSchemaMap(schema: Schema) = MutableSchemaMap(
     schema = schema,
-    entityMaps = listOf(
-        MutableEntitySchemaMap(
-            pathKeyMaps = listOf(
-                MutableEntityKeysSchemaMap(
+    entityPaths = listOf(
+        MutableEntityPathSchemaMap(
+            pathEntities = listOf(
+                MutablePathEntitySchemaMap(
                     name = "address_book",
-                    keyFieldMaps = listOf()
+                    keys = listOf()
                 )
-            ),
-            usePartitionId = 1
+            )
         ),
-        MutableEntitySchemaMap(
-            pathKeyMaps = listOf(
-                MutableEntityKeysSchemaMap(
+        MutableEntityPathSchemaMap(
+            pathEntities = listOf(
+                MutablePathEntitySchemaMap(
                     name = "address_book",
-                    keyFieldMaps = listOf()
+                    keys = listOf()
                 ),
-                MutableEntityKeysSchemaMap(
+                MutablePathEntitySchemaMap(
                     name = "person",
-                    keyFieldMaps = listOf(
+                    keys = listOf(
                         MutableKeyFieldSchemaMap("id", KeyType.CLUSTERING)
                     )
                 )
-            ),
-            usePartitionId = 1
+            )
         ),
-        MutableEntitySchemaMap(
-            pathKeyMaps = listOf(
-                MutableEntityKeysSchemaMap(
+        MutableEntityPathSchemaMap(
+            pathEntities = listOf(
+                MutablePathEntitySchemaMap(
                     name = "address_book",
-                    keyFieldMaps = listOf()
+                    keys = listOf()
                 ),
-                MutableEntityKeysSchemaMap(
+                MutablePathEntitySchemaMap(
                     name = "person",
-                    keyFieldMaps = listOf(
+                    keys = listOf(
                         MutableKeyFieldSchemaMap("id", KeyType.PARTITION)
                     )
                 ),
-                MutableEntityKeysSchemaMap(
+                MutablePathEntitySchemaMap(
                     name = "relation",
-                    keyFieldMaps = listOf(
+                    keys = listOf(
                         MutableKeyFieldSchemaMap("id", KeyType.CLUSTERING)
                     )
                 )

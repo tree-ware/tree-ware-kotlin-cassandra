@@ -5,42 +5,39 @@ import org.tree_ware.schema.core.*
 interface SchemaMap {
     val schema: Schema
 
-    val rootMap: RootSchemaMap
-    val entityMaps: List<EntitySchemaMap>
+    val root: RootSchemaMap
+    val entityPaths: List<EntityPathSchemaMap>
 }
 
 interface RootSchemaMap {
-    val rootSchema: RootSchema
+    val schema: RootSchema
 
     val keyspaceName: String
 }
 
-interface EntitySchemaMap {
-    val pathKeyMaps: List<EntityKeysSchemaMap>
+interface EntityPathSchemaMap {
+    val pathEntities: List<PathEntitySchemaMap>
 
-    /**
-     * Introduces a synthetic-partition-key called `partition_id_` if value is non-zero.
-     * The non-zero value is the number of values for `partition_id`.
-     */
-    val usePartitionId: Int
+    /** Number of values for the synthetic-partition-key called `part_id_`. */
+    val syntheticPartIdSize: Int
 
     val tableName: String
 
-    val entityPathSchema: EntityPathSchema
+    val schema: EntityPathSchema
 }
 
-interface EntityKeysSchemaMap {
+interface PathEntitySchemaMap {
     val name: String
-    val keyFieldMaps: List<KeyFieldSchemaMap>
+    val keys: List<KeyFieldSchemaMap>
 
-    val entitySchema: EntitySchema
+    val schema: EntitySchema
 }
 
 interface KeyFieldSchemaMap {
     val name: String
     val type: KeyType
 
-    val fieldSchema: FieldSchema
+    val schema: FieldSchema
 }
 
 enum class KeyType {

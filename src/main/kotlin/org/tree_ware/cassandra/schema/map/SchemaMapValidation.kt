@@ -15,7 +15,9 @@ val TABLE_NAME_LENGTH = 48
 fun validate(schemaMap: MutableSchemaMap): List<String> {
     val logger = LogManager.getLogger()
 
-    val pathErrors = validateEntitySchemaMaps(schemaMap)
+    val pathErrors = schemaMap.entityPaths.mapIndexed { index, entityPath ->
+        validateEntityPathSchemaMap(entityPath, schemaMap.root.schema, index)
+    }.flatten()
     pathErrors.forEach { logger.error(it) }
     if (pathErrors.isNotEmpty()) return pathErrors
 
@@ -24,17 +26,12 @@ fun validate(schemaMap: MutableSchemaMap): List<String> {
     return nameErrors
 }
 
-fun validateEntitySchemaMaps(schemaMap: MutableSchemaMap): List<String> =
-    schemaMap.entityMaps.mapIndexed { index, entitySchemaMap ->
-        validateEntitySchemaMap(entitySchemaMap, schemaMap.rootMap.rootSchema, index)
-    }.flatten()
-
-private fun validateEntitySchemaMap(
-    entitySchemaMap: MutableEntitySchemaMap,
-    root: RootSchema,
+fun validateEntityPathSchemaMap(
+    entityPath: MutableEntityPathSchemaMap,
+    rootSchema: RootSchema,
     index: Int
 ): List<String> {
-    val entityPath = entitySchemaMap.pathKeyMaps.map { it.name }
+    val pathEntityNames = entityPath.pathEntities.map { it.name }
 
     // Tree-ware can, but doesn't yet support the case where an entity name repeats in the path.
     // All keys of a table need to have unique names. Entity key-names are not unique across entities
@@ -42,70 +39,56 @@ private fun validateEntitySchemaMap(
     // path are not unique, our naming scheme for table keys can still result in conflicts.
     // The solution is to include a repetition-count in the name to make the names unique.
     // The repetition-count is not yet implemented.
-    if (entityPath.size != entityPath.toSet().size) return listOf(
-        "Duplicate entity names in path are not yet supported in tree-ware Cassandra: entity-maps[$index]"
+    if (pathEntityNames.size != pathEntityNames.toSet().size) return listOf(
+        "Duplicate entity names in path are not yet supported in tree-ware Cassandra: entityPaths[$index]"
     )
 
-    val entityPathSchema = MutableEntityPathSchema(entityPath)
-    val pathErrors = validate(entityPathSchema, root, "entity-maps[$index]")
+    val entityPathSchema = MutableEntityPathSchema(pathEntityNames)
+    val pathErrors = validate(entityPathSchema, rootSchema, "entityPaths[$index]")
     if (pathErrors.isNotEmpty()) return pathErrors
-    entitySchemaMap.entityPathSchema = entityPathSchema
+    entityPath.schema = entityPathSchema
 
-    // Ensure that keys specified in the path match the keys of the entities in the path
-    return validatePathKeyMaps(entitySchemaMap.pathKeyMaps, entityPathSchema, index) +
-            validatePartitionKeys(entitySchemaMap, index)
+    // Validate the entities in the path
+    return entityPath.pathEntities.zip(entityPathSchema.pathEntities) { pathEntity, entitySchema ->
+        validatePathEntitySchemaMap(pathEntity, entitySchema, index)
+    }.flatten()
 }
 
-private fun validatePathKeyMaps(
-    pathKeyMaps: List<MutableEntityKeysSchemaMap>,
-    entityPathSchema: EntityPathSchema,
-    index: Int
-): List<String> = pathKeyMaps.zip(entityPathSchema.pathEntities) { entityKeysSchemaMap, entitySchema ->
-    validateEntityKeysSchemaMaps(entityKeysSchemaMap, entitySchema, index)
-}.flatten()
-
-fun validateEntityKeysSchemaMaps(
-    entityKeysSchemaMap: MutableEntityKeysSchemaMap,
+fun validatePathEntitySchemaMap(
+    pathEntity: MutablePathEntitySchemaMap,
     entitySchema: EntitySchema,
     index: Int
 ): List<String> {
-    val keyFieldSchemaList = entitySchema.fields.filter { it.isKey }
-    if (entityKeysSchemaMap.keyFieldMaps.size != keyFieldSchemaList.size) return listOf(
-        "Invalid number of keys in entity-map ${entityKeysSchemaMap.name}: entity-maps[$index]"
+    val keyFieldSchemas = entitySchema.fields.filter { it.isKey }
+    if (pathEntity.keys.size != keyFieldSchemas.size) return listOf(
+        "Invalid number of keys in pathEntity ${pathEntity.name} map: entityPaths[$index]"
     )
-    val fieldErrors = entityKeysSchemaMap.keyFieldMaps.zip(keyFieldSchemaList) { keyFieldSchemaMap, fieldSchema ->
-        validateKeyFieldSchemaMap(keyFieldSchemaMap, fieldSchema, index)
+    val fieldErrors = pathEntity.keys.zip(keyFieldSchemas) { keyField, fieldSchema ->
+        validateKeyFieldSchemaMap(keyField, fieldSchema, index)
     }.flatten()
-    if (fieldErrors.isEmpty()) entityKeysSchemaMap.entitySchema = entitySchema
+    if (fieldErrors.isEmpty()) pathEntity.schema = entitySchema
     return fieldErrors
 }
 
 fun validateKeyFieldSchemaMap(
-    keyFieldSchemaMap: MutableKeyFieldSchemaMap,
+    keyField: MutableKeyFieldSchemaMap,
     fieldSchema: FieldSchema,
     index: Int
 ): List<String> {
-    return if (keyFieldSchemaMap.name == fieldSchema.name) {
-        keyFieldSchemaMap.fieldSchema = fieldSchema
+    return if (keyField.name == fieldSchema.name) {
+        keyField.schema = fieldSchema
         listOf()
     } else listOf(
-        "Key ${keyFieldSchemaMap.name} in map does not match key ${fieldSchema.name} in schema: entity-maps[$index]"
+        "Map key ${keyField.name} does not match schema key ${fieldSchema.name}: entityPaths[$index]"
     )
-}
-
-fun validatePartitionKeys(entitySchemaMap: EntitySchemaMap, index: Int): List<String> {
-    if (entitySchemaMap.usePartitionId > 0) return listOf()
-    val hasPartitionKeys =
-        entitySchemaMap.pathKeyMaps.flatMap { it.keyFieldMaps.map { it.type } }.any { it == KeyType.PARTITION }
-    return if (hasPartitionKeys) listOf() else listOf("No partition keys: entity-maps[$index]")
 }
 
 fun validateNames(schemaMap: SchemaMap): List<String> {
     val errors = mutableListOf<String>()
-    if (schemaMap.rootMap.keyspaceName.length > KEYSPACE_NAME_LENGTH) errors.add(
-        "Keyspace name ${schemaMap.rootMap.keyspaceName} exceeds $KEYSPACE_NAME_LENGTH character limit"
+    if (schemaMap.root.keyspaceName.length > KEYSPACE_NAME_LENGTH) errors.add(
+        "Keyspace name ${schemaMap.root.keyspaceName} exceeds $KEYSPACE_NAME_LENGTH character limit"
     )
-    schemaMap.entityMaps.forEach {
+    schemaMap.entityPaths.forEach {
         if (it.tableName.length > TABLE_NAME_LENGTH) errors.add(
             "Table name ${it.tableName} exceeds $TABLE_NAME_LENGTH character limit"
         )
