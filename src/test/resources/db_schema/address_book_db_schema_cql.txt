@@ -1,0 +1,4 @@
+CREATE KEYSPACE IF NOT EXISTS tw_address_book WITH replication={'class':'SimpleStrategy','replication_factor':2} AND durable_writes=true
+CREATE TABLE IF NOT EXISTS tw_address_book.address_book (partition_id_ int PRIMARY KEY,name text,last_updated timestamp,"settings/address_book_settings/last_name_first" boolean,"settings/address_book_settings/encrypt_hero_name" boolean,"settings/address_book_settings/card_colors" set<text>)
+CREATE TABLE IF NOT EXISTS tw_address_book.ab__person (partition_id_ int,"/person/id" uuid,first_name text,last_name text,hero_name text,email set<text>,PRIMARY KEY(partition_id_,"/person/id"))
+CREATE TABLE IF NOT EXISTS tw_address_book.abp__relation (partition_id_ int,"/person/id" uuid,"/relation/id" uuid,relationship text,person text,PRIMARY KEY((partition_id_,"/person/id"),"/relation/id"))

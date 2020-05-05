@@ -10,7 +10,7 @@ val TABLE_NAME_LENGTH = 48
  * Returns a list of errors. Returns an empty list if there are no errors.
  *
  * Side-effects:
- * 1. `entityPathSchema` in `EntitySchemaMap` are resolved
+ * 1. Resolve schema in map elements
  */
 fun validate(schemaMap: MutableSchemaMap): List<String> {
     val logger = LogManager.getLogger()
@@ -57,7 +57,7 @@ private fun validateEntitySchemaMap(
 }
 
 private fun validatePathKeyMaps(
-    pathKeyMaps: List<EntityKeysSchemaMap>,
+    pathKeyMaps: List<MutableEntityKeysSchemaMap>,
     entityPathSchema: EntityPathSchema,
     index: Int
 ): List<String> = pathKeyMaps.zip(entityPathSchema.pathEntities) { entityKeysSchemaMap, entitySchema ->
@@ -65,15 +65,32 @@ private fun validatePathKeyMaps(
 }.flatten()
 
 fun validateEntityKeysSchemaMaps(
-    entityKeysSchemaMap: EntityKeysSchemaMap,
+    entityKeysSchemaMap: MutableEntityKeysSchemaMap,
     entitySchema: EntitySchema,
     index: Int
 ): List<String> {
-    val mapKeyNames = entityKeysSchemaMap.keyFieldMaps.map { it.name }
-    val entityKeyNames = entitySchema.fields.filter { it.isKey }.map { it.name }
-    return if (mapKeyNames != entityKeyNames) listOf(
-        "Keys in map $mapKeyNames don't match keys in entity $entityKeyNames: entity-maps[$index] path entity ${entityKeysSchemaMap.name}"
-    ) else listOf()
+    val keyFieldSchemaList = entitySchema.fields.filter { it.isKey }
+    if (entityKeysSchemaMap.keyFieldMaps.size != keyFieldSchemaList.size) return listOf(
+        "Invalid number of keys in entity-map ${entityKeysSchemaMap.name}: entity-maps[$index]"
+    )
+    val fieldErrors = entityKeysSchemaMap.keyFieldMaps.zip(keyFieldSchemaList) { keyFieldSchemaMap, fieldSchema ->
+        validateKeyFieldSchemaMap(keyFieldSchemaMap, fieldSchema, index)
+    }.flatten()
+    if (fieldErrors.isEmpty()) entityKeysSchemaMap.entitySchema = entitySchema
+    return fieldErrors
+}
+
+fun validateKeyFieldSchemaMap(
+    keyFieldSchemaMap: MutableKeyFieldSchemaMap,
+    fieldSchema: FieldSchema,
+    index: Int
+): List<String> {
+    return if (keyFieldSchemaMap.name == fieldSchema.name) {
+        keyFieldSchemaMap.fieldSchema = fieldSchema
+        listOf()
+    } else listOf(
+        "Key ${keyFieldSchemaMap.name} in map does not match key ${fieldSchema.name} in schema: entity-maps[$index]"
+    )
 }
 
 fun validatePartitionKeys(entitySchemaMap: EntitySchemaMap, index: Int): List<String> {

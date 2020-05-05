@@ -1,8 +1,6 @@
 package org.tree_ware.cassandra.schema.map
 
-import org.tree_ware.schema.core.EntityPathSchema
-import org.tree_ware.schema.core.RootSchema
-import org.tree_ware.schema.core.Schema
+import org.tree_ware.schema.core.*
 
 class MutableSchemaMap(
     override val schema: Schema,
@@ -16,7 +14,7 @@ class MutableRootSchemaMap(
     override val rootSchema: RootSchema,
     keyspaceName: String? = null
 ) : RootSchemaMap {
-    override val keyspaceName = "tw.$keyspaceName" ?: "tw.${rootSchema.name}"
+    override val keyspaceName = if (keyspaceName != null) "tw_$keyspaceName" else "tw_${rootSchema.name}"
 }
 
 class MutableEntitySchemaMap(
@@ -42,13 +40,27 @@ class MutableEntitySchemaMap(
         // If an entity name has underscores, then it is treated as multiple words,
         // and the initials of each word is used.
         val tablePrefix = initialEntityNames.flatMap { it.split("_") }.map { it[0] }.joinToString("")
-        return "${tablePrefix}__$lastEntityName"
+        return if (tablePrefix == "") lastEntityName else "${tablePrefix}__$lastEntityName"
     }
 }
 
 class MutableEntityKeysSchemaMap(
     override val name: String,
     override val keyFieldMaps: List<MutableKeyFieldSchemaMap>
-) : EntityKeysSchemaMap
+) : EntityKeysSchemaMap {
+    override var entitySchema: EntitySchema
+        get() = _entitySchema ?: throw IllegalStateException("Entity schema is not resolved")
+        internal set(value) {
+            _entitySchema = value
+        }
+    private var _entitySchema: EntitySchema? = null
+}
 
-class MutableKeyFieldSchemaMap(override val name: String, override val type: KeyType) : KeyFieldSchemaMap
+class MutableKeyFieldSchemaMap(override val name: String, override val type: KeyType) : KeyFieldSchemaMap {
+    override var fieldSchema: FieldSchema
+        get() = _fieldSchema ?: throw IllegalStateException("Field schema is not set")
+        internal set(value) {
+            _fieldSchema = value
+        }
+    private var _fieldSchema: FieldSchema? = null
+}
