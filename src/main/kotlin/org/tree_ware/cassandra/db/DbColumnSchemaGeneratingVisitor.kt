@@ -3,13 +3,17 @@ package org.tree_ware.cassandra.db
 import com.datastax.oss.driver.api.core.CqlIdentifier
 import com.datastax.oss.driver.api.core.type.DataType
 import com.datastax.oss.driver.api.core.type.DataTypes
+import com.datastax.oss.driver.api.querybuilder.schema.CreateType
 import org.tree_ware.cassandra.schema.map.KeyType
 import org.tree_ware.schema.core.*
 import org.tree_ware.schema.visitor.AbstractSchemaVisitor
 
 data class ColumnSchema(val name: CqlIdentifier, val keyType: KeyType?, val dataType: DataType)
 
-class DbColumnSchemaGeneratingVisitor : AbstractSchemaVisitor() {
+class DbColumnSchemaGeneratingVisitor(
+    private val keyspaceName: String,
+    private val createTypes: HashMap<String, CreateType>
+) : AbstractSchemaVisitor() {
     val columns: List<ColumnSchema> get() = _columns
     private val _columns = mutableListOf<ColumnSchema>()
 
@@ -58,8 +62,11 @@ class DbColumnSchemaGeneratingVisitor : AbstractSchemaVisitor() {
     }
 
     override fun visit(associationField: AssociationFieldSchema): SchemaTraversalAction {
-        // TODO(deepak-nulu): use a user-defined-type for associations
-        addColumn(DataTypes.TEXT, associationField.multiplicity.isList())
+        val typeName = getDbAssociationTypeName(associationField)
+        if (!createTypes.containsKey(typeName)) {
+            createTypes[typeName] = encodeCreateDbAssociationType(keyspaceName, associationField, createTypes)
+        }
+        addColumn(DataTypes.custom(typeName), associationField.multiplicity.isList())
         return SchemaTraversalAction.CONTINUE
     }
 

@@ -3,34 +3,42 @@ package org.tree_ware.cassandra.db
 import com.datastax.oss.driver.api.core.type.DataTypes
 import com.datastax.oss.driver.api.querybuilder.BuildableQuery
 import com.datastax.oss.driver.api.querybuilder.SchemaBuilder
+import com.datastax.oss.driver.api.querybuilder.schema.CreateKeyspace
 import com.datastax.oss.driver.api.querybuilder.schema.CreateTable
+import com.datastax.oss.driver.api.querybuilder.schema.CreateType
+import com.datastax.oss.driver.api.querybuilder.schema.OngoingCreateType
 import org.tree_ware.cassandra.schema.map.EntityPathSchemaMap
 import org.tree_ware.cassandra.schema.map.KeyType
-import org.tree_ware.cassandra.schema.map.RootSchemaMap
 import org.tree_ware.cassandra.schema.map.SchemaMap
+import org.tree_ware.schema.core.EntityPathSchema
 
 const val SYNTHETIC_PART_ID_NAME = "part_id_"
 
-fun encodeDbSchema(schemaMap: SchemaMap): List<BuildableQuery> {
-    val dbCommands = mutableListOf<BuildableQuery>()
-    dbCommands.add(encodeDbKeyspace(schemaMap.root))
-    schemaMap.entityPaths.forEach { dbCommands.add(encodeDbTable(schemaMap.root, it)) }
-    return dbCommands
+fun encodeCreateDbSchema(environment: String, schemaMap: SchemaMap): List<BuildableQuery> {
+    val keyspaceName = "${environment}_${schemaMap.root.keyspaceName}"
+    val createKeyspace = encodeCreateDbKeyspace(keyspaceName)
+    val createTypes = HashMap<String, CreateType>()
+    val createTables = schemaMap.entityPaths.map { encodeCreateDbTable(keyspaceName, it, createTypes) }
+    return listOf(createKeyspace) + createTypes.values + createTables
 }
 
-private fun encodeDbKeyspace(root: RootSchemaMap): BuildableQuery =
-    SchemaBuilder.createKeyspace(root.keyspaceName)
+private fun encodeCreateDbKeyspace(keyspaceName: String): CreateKeyspace =
+    SchemaBuilder.createKeyspace(keyspaceName)
         .ifNotExists()
         .withSimpleStrategy(2)
         .withDurableWrites(true)
 
-private fun encodeDbTable(root: RootSchemaMap, entityPath: EntityPathSchemaMap): BuildableQuery {
+private fun encodeCreateDbTable(
+    keyspaceName: String,
+    entityPath: EntityPathSchemaMap,
+    createTypes: HashMap<String, CreateType>
+): CreateTable {
     var table: CreateTable = SchemaBuilder
-        .createTable(root.keyspaceName, """"${entityPath.tableName}"""")
+        .createTable(keyspaceName, """"${entityPath.tableName}"""")
         .ifNotExists()
         .withPartitionKey(SYNTHETIC_PART_ID_NAME, DataTypes.INT)
 
-    val columnGenerator = DbColumnSchemaGeneratingVisitor()
+    val columnGenerator = DbColumnSchemaGeneratingVisitor(keyspaceName, createTypes)
 
     // Generate key columns.
     entityPath.pathEntities.forEach { pathEntity ->
@@ -39,11 +47,11 @@ private fun encodeDbTable(root: RootSchemaMap, entityPath: EntityPathSchemaMap):
             key.schema.traverse(columnGenerator)
         }
     }
-    // Generate non-key columns
+    // Generate non-key columns.
     columnGenerator.reinitialize(null, null)
     entityPath.schema.resolvedEntity.fields.filterNot { it.isKey }.forEach { it.traverse(columnGenerator) }
 
-    // Add all columns to the table
+    // Add all columns to the table.
     columnGenerator.columns.forEach {
         table = when (it.keyType) {
             KeyType.PARTITION -> table.withPartitionKey(it.name, it.dataType)
@@ -53,4 +61,35 @@ private fun encodeDbTable(root: RootSchemaMap, entityPath: EntityPathSchemaMap):
     }
 
     return table
+}
+
+internal fun getDbAssociationTypeName(entityPathSchema: EntityPathSchema): String =
+    entityPathSchema.entityPath.joinToString("/", "/")
+
+internal fun encodeCreateDbAssociationType(
+    keyspaceName: String,
+    entityPathSchema: EntityPathSchema,
+    createTypes: HashMap<String, CreateType>
+): CreateType {
+    val typeName = getDbAssociationTypeName(entityPathSchema)
+    var type: OngoingCreateType = SchemaBuilder
+        .createType(keyspaceName, "\"$typeName\"")
+        .ifNotExists()
+
+    // Generate key columns for use as fields in the type.
+    val columnGenerator = DbColumnSchemaGeneratingVisitor(keyspaceName, createTypes)
+    entityPathSchema.entityPath.zip(entityPathSchema.pathEntities) { pathEntityName, pathEntity ->
+        val keyFields = pathEntity.fields.filter { it.isKey }
+        if (keyFields.isNotEmpty()) {
+            columnGenerator.reinitialize(listOf("", pathEntityName), null)
+            keyFields.forEach { it.traverse(columnGenerator) }
+        }
+    }
+
+    // Add columns as fields to the type.
+    columnGenerator.columns.forEach {
+        type = type.withField(it.name, it.dataType)
+    }
+
+    return type as CreateType
 }

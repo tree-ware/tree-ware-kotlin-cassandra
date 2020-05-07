@@ -1,7 +1,6 @@
 package org.tree_ware.cassandra.schema.db
 
-import org.apache.logging.log4j.LogManager
-import org.tree_ware.cassandra.db.encodeDbSchema
+import org.tree_ware.cassandra.db.encodeCreateDbSchema
 import org.tree_ware.cassandra.schema.map.newAddressBookSchema
 import org.tree_ware.cassandra.schema.map.newAddressBookSchemaMap
 import org.tree_ware.schema.core.validate
@@ -12,8 +11,6 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class AddressBookDbSchemaTests {
-    val logger = LogManager.getLogger()
-
     @Test
     fun `Address book DB schema is valid`() {
         val schema = newAddressBookSchema()
@@ -28,11 +25,11 @@ class AddressBookDbSchemaTests {
         assertTrue(cqlFile.exists())
         val expected = cqlFile.readText()
 
-        val dbCommands = encodeDbSchema(schemaMap)
+        val dbCommands = encodeCreateDbSchema("test", schemaMap)
         val cqlWriter = StringWriter()
         dbCommands.forEach {
             cqlWriter.write(it.asCql())
-            cqlWriter.write("\n")
+            cqlWriter.write(";\n")
         }
         val actual = cqlWriter.toString()
 
