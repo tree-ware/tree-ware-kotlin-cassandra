@@ -36,12 +36,12 @@ private fun encodeDbTable(root: RootSchemaMap, entityPath: EntityPathSchemaMap):
     entityPath.pathEntities.forEach { pathEntity ->
         pathEntity.keys.forEach { key ->
             columnGenerator.reinitialize(listOf("", pathEntity.name), key.type)
-            key.schema.accept(columnGenerator)
+            key.schema.traverse(columnGenerator)
         }
     }
     // Generate non-key columns
     columnGenerator.reinitialize(null, null)
-    entityPath.schema.resolvedEntity.fields.filterNot { it.isKey }.forEach { it.accept(columnGenerator) }
+    entityPath.schema.resolvedEntity.fields.filterNot { it.isKey }.forEach { it.traverse(columnGenerator) }
 
     // Add all columns to the table
     columnGenerator.columns.forEach {

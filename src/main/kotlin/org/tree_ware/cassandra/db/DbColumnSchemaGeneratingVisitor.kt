@@ -9,7 +9,7 @@ import org.tree_ware.schema.visitor.AbstractSchemaVisitor
 
 data class ColumnSchema(val name: CqlIdentifier, val keyType: KeyType?, val dataType: DataType)
 
-class DbColumnSchemaGeneratingVisitor : AbstractSchemaVisitor(), BracketedVisitor {
+class DbColumnSchemaGeneratingVisitor : AbstractSchemaVisitor() {
     val columns: List<ColumnSchema> get() = _columns
     private val _columns = mutableListOf<ColumnSchema>()
 
@@ -29,52 +29,43 @@ class DbColumnSchemaGeneratingVisitor : AbstractSchemaVisitor(), BracketedVisito
         _columns.add(ColumnSchema(cqlName, keyType, columnType))
     }
 
-    // BracketedVisitor methods
-
-    override fun objectStart(name: String) {}
-
-    override fun objectEnd() {
-        nameParts.removeAt(nameParts.lastIndex)
-    }
-
-    override fun listStart(name: String) {}
-
-    override fun listEnd() {}
-
     // SchemaVisitor methods
-
-    override fun visit(namedElement: NamedElementSchema): Boolean {
-        nameParts.add(namedElement.name)
-        return true
-    }
 
     // Fields
 
-    override fun visit(primitiveField: PrimitiveFieldSchema): Boolean {
+    override fun visit(fieldSchema: FieldSchema): SchemaTraversalAction {
+        nameParts.add(fieldSchema.name)
+        return SchemaTraversalAction.CONTINUE
+    }
+
+    override fun leave(fieldSchema: FieldSchema) {
+        nameParts.removeAt(nameParts.lastIndex)
+    }
+
+    override fun visit(primitiveField: PrimitiveFieldSchema): SchemaTraversalAction {
         addColumn(treeWareToCqlDataType(primitiveField.primitive), primitiveField.multiplicity.isList())
-        return true
+        return SchemaTraversalAction.CONTINUE
     }
 
-    override fun visit(aliasField: AliasFieldSchema): Boolean {
+    override fun visit(aliasField: AliasFieldSchema): SchemaTraversalAction {
         addColumn(treeWareToCqlDataType(aliasField.resolvedAlias.primitive), aliasField.multiplicity.isList())
-        return true
+        return SchemaTraversalAction.CONTINUE
     }
 
-    override fun visit(enumerationField: EnumerationFieldSchema): Boolean {
+    override fun visit(enumerationField: EnumerationFieldSchema): SchemaTraversalAction {
         addColumn(DataTypes.TEXT, enumerationField.multiplicity.isList())
-        return true
+        return SchemaTraversalAction.CONTINUE
     }
 
-    override fun visit(associationField: AssociationFieldSchema): Boolean {
+    override fun visit(associationField: AssociationFieldSchema): SchemaTraversalAction {
         // TODO(deepak-nulu): use a user-defined-type for associations
         addColumn(DataTypes.TEXT, associationField.multiplicity.isList())
-        return true
+        return SchemaTraversalAction.CONTINUE
     }
 
-    override fun visit(compositionField: CompositionFieldSchema): Boolean {
-        // TODO(deepak-nulu): ability for visit() method to abort entire traversal or just its subtree
-        if (compositionField.multiplicity.isList()) return true
+    override fun visit(compositionField: CompositionFieldSchema): SchemaTraversalAction {
+        if (compositionField.multiplicity.isList()) return SchemaTraversalAction.ABORT_SUB_TREE
         // TODO(deepak-nulu): visitor-flag to traverse or not traverse the resolvedEntity
-        return compositionField.resolvedEntity.accept(this)
+        return compositionField.resolvedEntity.traverse(this)
     }
 }
