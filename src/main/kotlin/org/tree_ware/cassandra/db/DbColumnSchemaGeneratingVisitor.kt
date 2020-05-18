@@ -13,7 +13,7 @@ data class ColumnSchema(val name: CqlIdentifier, val keyType: KeyType?, val data
 class DbColumnSchemaGeneratingVisitor(
     private val keyspaceName: String,
     private val createTypes: HashMap<String, CreateType>
-) : AbstractSchemaVisitor() {
+) : AbstractSchemaVisitor<SchemaTraversalAction>(SchemaTraversalAction.CONTINUE) {
     val columns: List<ColumnSchema> get() = _columns
     private val _columns = mutableListOf<ColumnSchema>()
 
@@ -37,12 +37,12 @@ class DbColumnSchemaGeneratingVisitor(
 
     // Fields
 
-    override fun visit(fieldSchema: FieldSchema): SchemaTraversalAction {
-        nameParts.add(fieldSchema.name)
+    override fun visit(field: FieldSchema): SchemaTraversalAction {
+        nameParts.add(field.name)
         return SchemaTraversalAction.CONTINUE
     }
 
-    override fun leave(fieldSchema: FieldSchema) {
+    override fun leave(field: FieldSchema) {
         nameParts.removeAt(nameParts.lastIndex)
     }
 
