@@ -10,12 +10,13 @@ import com.datastax.oss.driver.api.querybuilder.schema.OngoingCreateType
 import org.tree_ware.cassandra.schema.map.EntityPathSchemaMap
 import org.tree_ware.cassandra.schema.map.KeyType
 import org.tree_ware.cassandra.schema.map.SchemaMap
+import org.tree_ware.cassandra.schema.map.getKeyspaceName
 import org.tree_ware.schema.core.EntityPathSchema
 
 const val SYNTHETIC_PART_ID_NAME = "part_id_"
 
 fun encodeCreateDbSchema(environment: String, schemaMap: SchemaMap): List<BuildableQuery> {
-    val keyspaceName = "${environment}_${schemaMap.root.keyspaceName}"
+    val keyspaceName = getKeyspaceName(environment, schemaMap.root)
     val createKeyspace = encodeCreateDbKeyspace(keyspaceName)
     val createTypes = HashMap<String, CreateType>()
     val createTables = schemaMap.entityPaths.map { encodeCreateDbTable(keyspaceName, it, createTypes) }

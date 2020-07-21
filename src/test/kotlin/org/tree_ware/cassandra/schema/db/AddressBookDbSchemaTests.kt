@@ -21,7 +21,7 @@ class AddressBookDbSchemaTests {
         val errors = org.tree_ware.cassandra.schema.map.validate(schemaMap)
         assertTrue(errors.isEmpty())
 
-        val cqlFile = File("src/test/resources/db_schema/address_book_db_schema_cql.txt")
+        val cqlFile = File("src/test/resources/db/address_book_db_schema_cql.txt")
         assertTrue(cqlFile.exists())
         val expected = cqlFile.readText()
 

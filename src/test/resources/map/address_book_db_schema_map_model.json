@@ -1,0 +1,31 @@
+{
+  "db_schema_map": {
+    "address_book": {
+      "db_schema_map": {
+        "keyspace": "test_tw_address_book",
+        "table": "address_book"
+      },
+      "value": {
+        "person": {
+          "db_schema_map": {
+            "keyspace": "test_tw_address_book",
+            "table": "ab__person"
+          },
+          "value": [
+            {
+              "value": {
+                "relation": {
+                  "db_schema_map": {
+                    "keyspace": "test_tw_address_book",
+                    "table": "abp__relation"
+                  },
+                  "value": []
+                }
+              }
+            }
+          ]
+        }
+      }
+    }
+  }
+}
