@@ -7,19 +7,23 @@
       },
       "value": {
         "person": {
-          "db_schema_map": {
-            "keyspace": "test_tw_address_book",
-            "table": "ab__person"
-          },
           "value": [
             {
+              "db_schema_map": {
+                "keyspace": "test_tw_address_book",
+                "table": "ab__person"
+              },
               "value": {
                 "relation": {
-                  "db_schema_map": {
-                    "keyspace": "test_tw_address_book",
-                    "table": "abp__relation"
-                  },
-                  "value": []
+                  "value": [
+                    {
+                      "db_schema_map": {
+                        "keyspace": "test_tw_address_book",
+                        "table": "abp__relation"
+                      },
+                      "value": {}
+                    }
+                  ]
                 }
               }
             }

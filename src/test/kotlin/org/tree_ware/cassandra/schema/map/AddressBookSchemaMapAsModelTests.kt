@@ -1,6 +1,7 @@
 package org.tree_ware.cassandra.schema.map
 
 import org.tree_ware.model.codec.encodeJson
+import org.tree_ware.schema.core.validate
 import java.io.File
 import java.io.StringWriter
 import kotlin.test.Test
@@ -11,12 +12,12 @@ class AddressBookSchemaMapAsModelTests {
     @Test
     fun `Address book schema map is converted to a model correctly`() {
         val schema = newAddressBookSchema()
-        val schemaErrors = org.tree_ware.schema.core.validate(schema)
+        val schemaErrors = validate(schema)
         assertTrue(schemaErrors.isEmpty())
 
         val schemaMap = newAddressBookSchemaMap(schema)
-        val errors = validate(schemaMap)
-        assertTrue(errors.isEmpty())
+        val schemaMapErrors = validate(schemaMap)
+        assertTrue(schemaMapErrors.isEmpty())
 
         val mapModel = asModel("test", schemaMap)
 

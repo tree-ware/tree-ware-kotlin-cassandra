@@ -79,12 +79,11 @@ internal fun encodeCreateDbAssociationType(
 
     // Generate key columns for use as fields in the type.
     val columnGenerator = DbColumnSchemaGeneratingVisitor(keyspaceName, createTypes)
-    entityPathSchema.entityPath.zip(entityPathSchema.pathEntities) { pathEntityName, pathEntity ->
-        val keyFields = pathEntity.fields.filter { it.isKey }
-        if (keyFields.isNotEmpty()) {
-            columnGenerator.reinitialize(listOf("", pathEntityName), null)
-            keyFields.forEach { it.traverse(columnGenerator) }
-        }
+    entityPathSchema.keyPath.zip(entityPathSchema.keyEntities) { keyEntityName, keyEntity ->
+        val keyFields = keyEntity.fields.filter { it.isKey }
+        assert(keyFields.isNotEmpty())
+        columnGenerator.reinitialize(listOf("", keyEntityName), null)
+        keyFields.forEach { it.traverse(columnGenerator) }
     }
 
     // Add columns as fields to the type.

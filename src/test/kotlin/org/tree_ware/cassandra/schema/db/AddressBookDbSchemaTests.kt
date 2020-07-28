@@ -26,12 +26,7 @@ class AddressBookDbSchemaTests {
         val expected = cqlFile.readText()
 
         val dbCommands = encodeCreateDbSchema("test", schemaMap)
-        val cqlWriter = StringWriter()
-        dbCommands.forEach {
-            cqlWriter.write(it.asCql())
-            cqlWriter.write(";\n")
-        }
-        val actual = cqlWriter.toString()
+        val actual = dbCommands.asString()
 
         assertEquals(expected, actual)
     }

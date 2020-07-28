@@ -11,7 +11,7 @@ fun asModel(environment: String, schemaMap: SchemaMap): MutableModel<DbSchemaMap
     // create the model by acting like a decoder. Eventually the mapping will
     // be captured as a list of models, and this code won't be needed.
     val schema = schemaMap.schema
-    val decoder = ModelDecodingStateMachine(schema, DB_SCHEMA_MAP_MODEL_TYPE) { DbSchemaMapAuxStateMachine(it) }
+    val decoder = ModelDecodingStateMachine(schema, DB_SCHEMA_MAP_MODEL_TYPE, { DbSchemaMapAuxStateMachine(it) }, true)
     val keyspace = getKeyspaceName(environment, schemaMap.root)
     schemaMap.entityPaths.forEach { addPath(decoder, keyspace, it) }
     return decoder.model as MutableModel<DbSchemaMapAux>
@@ -47,22 +47,21 @@ private fun addEntity(
     val pathEntity = entityPath.pathEntities[index]
     decoder.decodeKey(pathEntity.name)
     decoder.decodeObjectStart()
-    if (index == lastIndex) addAux(decoder, keyspace, entityPath.tableName)
 
     // Only the root entity in the path is not a list. So its value alone is
     // wrapped in a VALUE_KEY object. All other entities in the path are lists
     // and so their values are wrapped in a VALUE_KEY list.
     if (index == 0) {
+        if (index == lastIndex) addAux(decoder, keyspace, entityPath.tableName)
         decoder.decodeKey(VALUE_KEY)
         decoder.decodeObjectStart()
     } else {
         decoder.decodeKey(VALUE_KEY)
         decoder.decodeListStart()
-        if (index != lastIndex) {
-            decoder.decodeObjectStart()
-            decoder.decodeKey(VALUE_KEY)
-            decoder.decodeObjectStart()
-        }
+        decoder.decodeObjectStart()
+        if (index == lastIndex) addAux(decoder, keyspace, entityPath.tableName)
+        decoder.decodeKey(VALUE_KEY)
+        decoder.decodeObjectStart()
     }
 
     if (index < lastIndex) addEntity(decoder, keyspace, entityPath, index + 1, lastIndex)
@@ -70,10 +69,8 @@ private fun addEntity(
     if (index == 0) {
         decoder.decodeObjectEnd()
     } else {
-        if (index != lastIndex) {
-            decoder.decodeObjectEnd()
-            decoder.decodeObjectEnd()
-        }
+        decoder.decodeObjectEnd()
+        decoder.decodeObjectEnd()
         decoder.decodeListEnd()
     }
 
