@@ -57,6 +57,9 @@ class MutablePathEntitySchemaMap(
 }
 
 class MutableKeyFieldSchemaMap(override val name: String, override val type: KeyType) : KeyFieldSchemaMap {
+    override var nestedKeyParentName: String? = null
+        internal set
+
     override var schema: FieldSchema
         get() = _schema ?: throw IllegalStateException("Field schema is not set")
         internal set(value) {

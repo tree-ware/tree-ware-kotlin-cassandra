@@ -26,7 +26,7 @@ class AddressBookDbModelEncoderTests {
         assertTrue(schemaMapErrors.isEmpty())
 
         val dbSchemaMap = asModel(ENVIRONMENT, schemaMap)
-        val data = getModel<Unit>(schema, "model/address_book_1.json")
+        val data = getModel<Unit>(schema, "db/address_book_write_request.json")
 
         val cqlFile = File("src/test/resources/db/address_book_db_data_cql.txt")
         assertTrue(cqlFile.exists())

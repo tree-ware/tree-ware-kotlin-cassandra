@@ -28,11 +28,9 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
         leaderEntity: BaseEntityModel<Unit>,
         leaderEntitySchema: EntitySchema
     ) {
-        val keys = leaderEntitySchema.fields.filter { it.isKey }.mapNotNull { keySchema ->
-            val keyField = leaderEntity.getField(keySchema.name) ?: return@mapNotNull null
-            val keyName = "\"/$entityName/${keySchema.name}\""
-            val keyValue = keyField.dispatch(valueEncodingVisitor)
-            KeyColumn(keyName, raw(keyValue))
+        val keys = leaderEntitySchema.fields.filter { it.isKey }.flatMap { keySchema ->
+            val keyField = leaderEntity.getField(keySchema.name) ?: return@flatMap listOf<KeyColumn>()
+            getKeyValueList(entityName, keyField, valueEncodingVisitor) { key, value -> KeyColumn(key, raw(value)) }
         }
         // TODO(deepak-nulu): error if all keys are not present; reject entire request or only this subtree?
         entityPathTables.addLast(EntityTable(entityName, keys))
@@ -118,14 +116,18 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
         leaderEntity1: EntityModel<Unit>,
         followerEntity1: EntityModel<DbSchemaMapAux>?
     ): SchemaTraversalAction {
-        if (leaderEntity1.parent is CompositionListFieldModel) addRow(
-            leaderEntity1.parent.schema.name, leaderEntity1, leaderEntity1.schema, followerEntity1?.aux
-        )
+        if (leaderEntity1.parent is CompositionListFieldModel) {
+            val dbSchemaMap = followerEntity1?.aux ?: return SchemaTraversalAction.ABORT_SUB_TREE
+            addRow(leaderEntity1.parent.schema.name, leaderEntity1, leaderEntity1.schema, dbSchemaMap)
+        }
         return SchemaTraversalAction.CONTINUE
     }
 
     override fun leave(leaderEntity1: EntityModel<Unit>, followerEntity1: EntityModel<DbSchemaMapAux>?) {
-        if (leaderEntity1.parent is CompositionListFieldModel) rowDone(followerEntity1?.aux)
+        if (leaderEntity1.parent is CompositionListFieldModel) {
+            val dbSchemaMap = followerEntity1?.aux ?: return
+            rowDone(dbSchemaMap)
+        }
     }
 
     override fun visit(

@@ -3,8 +3,8 @@ package org.tree_ware.cassandra.schema.map
 import org.apache.logging.log4j.LogManager
 import org.tree_ware.schema.core.*
 
-val KEYSPACE_NAME_LENGTH = 48
-val TABLE_NAME_LENGTH = 48
+const val KEYSPACE_NAME_LENGTH = 48
+const val TABLE_NAME_LENGTH = 48
 
 /** Validates the specified schema-map.
  * Returns a list of errors. Returns an empty list if there are no errors.
@@ -54,17 +54,27 @@ fun validateEntityPathSchemaMap(
     }.flatten()
 }
 
+data class KeyInfo(val schema: FieldSchema, val nestedKeyParentName: String?) {
+    val keyName get() = if (nestedKeyParentName == null) schema.name else "$nestedKeyParentName/${schema.name}"
+}
+
 fun validatePathEntitySchemaMap(
     pathEntity: MutablePathEntitySchemaMap,
     entitySchema: EntitySchema,
     index: Int
 ): List<String> {
-    val keyFieldSchemas = entitySchema.fields.filter { it.isKey }
-    if (pathEntity.keys.size != keyFieldSchemas.size) return listOf(
+    val keyInfoList = mutableListOf<KeyInfo>()
+    entitySchema.fields.forEach { field ->
+        if (field.isKey) {
+            if (field !is CompositionFieldSchema) keyInfoList.add(KeyInfo(field, null))
+            else keyInfoList.addAll(field.resolvedEntity.fields.filter { it.isKey }.map { KeyInfo(it, field.name) })
+        }
+    }
+    if (pathEntity.keys.size != keyInfoList.size) return listOf(
         "Invalid number of keys in pathEntity ${pathEntity.name} map: entityPaths[$index]"
     )
-    val fieldErrors = pathEntity.keys.zip(keyFieldSchemas) { keyField, fieldSchema ->
-        validateKeyFieldSchemaMap(keyField, fieldSchema, index)
+    val fieldErrors = pathEntity.keys.zip(keyInfoList) { keyField, keyInfo ->
+        validateKeyFieldSchemaMap(keyField, keyInfo, index)
     }.flatten()
     if (fieldErrors.isEmpty()) pathEntity.schema = entitySchema
     return fieldErrors
@@ -72,14 +82,15 @@ fun validatePathEntitySchemaMap(
 
 fun validateKeyFieldSchemaMap(
     keyField: MutableKeyFieldSchemaMap,
-    fieldSchema: FieldSchema,
+    keyInfo: KeyInfo,
     index: Int
 ): List<String> {
-    return if (keyField.name == fieldSchema.name) {
-        keyField.schema = fieldSchema
+    return if (keyField.name == keyInfo.keyName) {
+        keyField.nestedKeyParentName = keyInfo.nestedKeyParentName
+        keyField.schema = keyInfo.schema
         listOf()
     } else listOf(
-        "Map key ${keyField.name} does not match schema key ${fieldSchema.name}: entityPaths[$index]"
+        "Map key ${keyField.name} does not match schema key ${keyInfo.keyName}: entityPaths[$index]"
     )
 }
 

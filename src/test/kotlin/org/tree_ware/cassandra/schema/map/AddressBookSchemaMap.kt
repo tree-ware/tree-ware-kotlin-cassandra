@@ -46,6 +46,22 @@ fun newAddressBookSchemaMap(schema: Schema) = MutableSchemaMap(
                     )
                 )
             )
+        ),
+        MutableEntityPathSchemaMap(
+            pathEntities = listOf(
+                MutablePathEntitySchemaMap(
+                    name = "address_book",
+                    keys = listOf()
+                ),
+                MutablePathEntitySchemaMap(
+                    name = "city_info",
+                    keys = listOf(
+                        MutableKeyFieldSchemaMap("city/country", KeyType.PARTITION),
+                        MutableKeyFieldSchemaMap("city/state", KeyType.CLUSTERING),
+                        MutableKeyFieldSchemaMap("city/name", KeyType.CLUSTERING)
+                    )
+                )
+            )
         )
     )
 )

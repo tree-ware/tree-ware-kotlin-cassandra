@@ -28,6 +28,17 @@
               }
             }
           ]
+        },
+        "city_info": {
+          "value": [
+            {
+              "db_schema_map": {
+                "keyspace": "test_tw_address_book",
+                "table": "ab__city_info"
+              },
+              "value": {}
+            }
+          ]
         }
       }
     }

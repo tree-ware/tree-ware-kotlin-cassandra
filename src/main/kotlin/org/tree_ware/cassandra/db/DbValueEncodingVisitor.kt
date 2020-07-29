@@ -1,9 +1,6 @@
 package org.tree_ware.cassandra.db
 
-import org.tree_ware.model.core.AliasFieldModel
-import org.tree_ware.model.core.AssociationFieldModel
-import org.tree_ware.model.core.EnumerationFieldModel
-import org.tree_ware.model.core.PrimitiveFieldModel
+import org.tree_ware.model.core.*
 import org.tree_ware.model.visitor.AbstractModelVisitor
 import org.tree_ware.schema.core.*
 
@@ -19,9 +16,30 @@ class DbValueEncodingVisitor : AbstractModelVisitor<Unit, String>("") {
 
     override fun visit(field: AssociationFieldModel<Unit>): String =
         field.schema.keyPath.zip(field.value) { keyEntityName, entityKeys ->
-            entityKeys.fields.map { "\"/$keyEntityName/${it.schema.name}\":${it.dispatch(this)}" }
+            entityKeys.fields.flatMap {
+                getKeyValueList(keyEntityName, it, this) { key, value -> "$key:$value" }
+            }
         }.flatten().joinToString(",", "{", "}")
 }
+
+
+internal fun <T> getKeyValueList(
+    entityName: String,
+    keyField: FieldModel<Unit>,
+    valueEncodingVisitor: DbValueEncodingVisitor,
+    transform: (key: String, value: String) -> T
+): List<T> =
+    if (keyField is CompositionFieldModel) {
+        keyField.value.fields.filter { it.schema.isKey }.map { nestedKey ->
+            val keyName = "\"/$entityName/${keyField.schema.name}/${nestedKey.schema.name}\""
+            val keyValue = nestedKey.dispatch(valueEncodingVisitor)
+            transform(keyName, keyValue)
+        }
+    } else {
+        val keyName = "\"/$entityName/${keyField.schema.name}\""
+        val keyValue = keyField.dispatch(valueEncodingVisitor)
+        listOf(transform(keyName, keyValue))
+    }
 
 private fun getRawValue(schema: PrimitiveSchema, value: Any?): String = when (schema) {
     is BooleanSchema -> value?.toString() ?: "false"

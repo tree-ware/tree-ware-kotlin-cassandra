@@ -37,6 +37,7 @@ interface KeyFieldSchemaMap {
     val name: String
     val type: KeyType
 
+    val nestedKeyParentName: String?
     val schema: FieldSchema
 }
 

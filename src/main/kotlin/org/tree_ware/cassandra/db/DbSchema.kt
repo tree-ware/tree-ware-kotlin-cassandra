@@ -44,7 +44,11 @@ private fun encodeCreateDbTable(
     // Generate key columns.
     entityPath.pathEntities.forEach { pathEntity ->
         pathEntity.keys.forEach { key ->
-            columnGenerator.reinitialize(listOf("", pathEntity.name), key.type)
+            val nestedKeyParentName = key.nestedKeyParentName
+            val initialNames =
+                if (nestedKeyParentName == null) listOf("", pathEntity.name)
+                else listOf("", pathEntity.name, nestedKeyParentName)
+            columnGenerator.reinitialize(initialNames, key.type)
             key.schema.traverse(columnGenerator)
         }
     }
