@@ -12,13 +12,14 @@ import org.tree_ware.cassandra.schema.map.KeyType
 import org.tree_ware.cassandra.schema.map.SchemaMap
 import org.tree_ware.cassandra.schema.map.getKeyspaceName
 import org.tree_ware.schema.core.EntityPathSchema
+import java.util.*
 
 const val SYNTHETIC_PART_ID_NAME = "part_id_"
 
 fun encodeCreateDbSchema(environment: String, schemaMap: SchemaMap): List<BuildableQuery> {
     val keyspaceName = getKeyspaceName(environment, schemaMap.root)
     val createKeyspace = encodeCreateDbKeyspace(keyspaceName)
-    val createTypes = HashMap<String, CreateType>()
+    val createTypes = sortedMapOf<String, CreateType>()
     val createTables = schemaMap.entityPaths.map { encodeCreateDbTable(keyspaceName, it, createTypes) }
     return listOf(createKeyspace) + createTypes.values + createTables
 }
@@ -32,7 +33,7 @@ private fun encodeCreateDbKeyspace(keyspaceName: String): CreateKeyspace =
 private fun encodeCreateDbTable(
     keyspaceName: String,
     entityPath: EntityPathSchemaMap,
-    createTypes: HashMap<String, CreateType>
+    createTypes: SortedMap<String, CreateType>
 ): CreateTable {
     var table: CreateTable = SchemaBuilder
         .createTable(keyspaceName, """"${entityPath.tableName}"""")
@@ -69,16 +70,16 @@ private fun encodeCreateDbTable(
 }
 
 internal fun getDbAssociationTypeName(entityPathSchema: EntityPathSchema): String =
-    entityPathSchema.entityPath.joinToString("/", "/")
+    entityPathSchema.entityPath.joinToString("/", "\"/", "\"")
 
 internal fun encodeCreateDbAssociationType(
     keyspaceName: String,
     entityPathSchema: EntityPathSchema,
-    createTypes: HashMap<String, CreateType>
+    createTypes: SortedMap<String, CreateType>
 ): CreateType {
     val typeName = getDbAssociationTypeName(entityPathSchema)
     var type: OngoingCreateType = SchemaBuilder
-        .createType(keyspaceName, "\"$typeName\"")
+        .createType(keyspaceName, typeName)
         .ifNotExists()
 
     // Generate key columns for use as fields in the type.

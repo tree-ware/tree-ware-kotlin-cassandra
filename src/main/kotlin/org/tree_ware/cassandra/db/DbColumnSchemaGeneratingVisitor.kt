@@ -4,15 +4,17 @@ import com.datastax.oss.driver.api.core.CqlIdentifier
 import com.datastax.oss.driver.api.core.type.DataType
 import com.datastax.oss.driver.api.core.type.DataTypes
 import com.datastax.oss.driver.api.querybuilder.schema.CreateType
+import com.datastax.oss.driver.internal.core.type.UserDefinedTypeBuilder
 import org.tree_ware.cassandra.schema.map.KeyType
 import org.tree_ware.schema.core.*
 import org.tree_ware.schema.visitor.AbstractSchemaVisitor
+import java.util.*
 
 data class ColumnSchema(val name: CqlIdentifier, val keyType: KeyType?, val dataType: DataType)
 
 class DbColumnSchemaGeneratingVisitor(
     private val keyspaceName: String,
-    private val createTypes: HashMap<String, CreateType>
+    private val createTypes: SortedMap<String, CreateType>
 ) : AbstractSchemaVisitor<SchemaTraversalAction>(SchemaTraversalAction.CONTINUE) {
     val columns: List<ColumnSchema> get() = _columns
     private val _columns = mutableListOf<ColumnSchema>()
@@ -66,7 +68,13 @@ class DbColumnSchemaGeneratingVisitor(
         if (!createTypes.containsKey(typeName)) {
             createTypes[typeName] = encodeCreateDbAssociationType(keyspaceName, associationField, createTypes)
         }
-        addColumn(DataTypes.custom(typeName), associationField.multiplicity.isList())
+        val dataType = UserDefinedTypeBuilder(keyspaceName, typeName)
+            .frozen()
+            // User-defined-type DataType instances cannot be built without a field, but we only need keyspace &
+            // typename, so we use a dummy field to suppress runtime errors.
+            .withField("dummy", DataTypes.INT)
+            .build()
+        addColumn(dataType, associationField.multiplicity.isList())
         return SchemaTraversalAction.CONTINUE
     }
 
