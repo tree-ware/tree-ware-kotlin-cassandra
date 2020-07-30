@@ -49,8 +49,8 @@ private fun getRawValue(schema: PrimitiveSchema, value: Any?): String = when (sc
     is FloatSchema,
     is DoubleSchema,
     is TimestampSchema -> value?.toString() ?: "0"
-    is UuidSchema,
     is StringSchema -> "'${value?.toString() ?: ""}'"
+    is UuidSchema -> value?.toString() ?: ""
     is ByteSchema,
     is Password1WaySchema,
     is Password2WaySchema,
