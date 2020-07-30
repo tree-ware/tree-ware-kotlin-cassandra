@@ -37,9 +37,9 @@
           ]
         },
         {
-          "id": "a8aacf55-7810-4b43-afe5-4344f25435fd",
           "first_name": "Lois",
           "last_name": "Lane",
+          "id": "a8aacf55-7810-4b43-afe5-4344f25435fd",
           "email": [
             "lois.lane@dailyplanet.com"
           ],
@@ -92,12 +92,12 @@
           ]
         },
         {
+          "info": "Capital of New York state",
           "city": {
             "name": "Albany",
             "state": "New York",
             "country": "United States of America"
           },
-          "info": "Capital of New York state",
           "related_city_info": [
             {
               "path_keys": [
@@ -113,21 +113,21 @@
           ]
         },
         {
+          "info": "Home of Princeton University",
+          "related_city_info": [],
           "city": {
             "name": "Princeton",
             "state": "New Jersey",
             "country": "United States of America"
-          },
-          "info": "Home of Princeton University",
-          "related_city_info": []
+          }
         },
         {
+          "info": "The cultural and financial center of Northern California",
           "city": {
             "name": "San Francisco",
             "state": "California",
             "country": "United States of America"
-          },
-          "info": "The cultural and financial center of Northern California"
+          }
         }
       ]
     }
