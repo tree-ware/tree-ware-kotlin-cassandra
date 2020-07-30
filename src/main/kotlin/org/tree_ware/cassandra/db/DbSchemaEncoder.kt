@@ -40,7 +40,7 @@ private fun encodeCreateDbTable(
         .ifNotExists()
         .withPartitionKey(SYNTHETIC_PART_ID_NAME, DataTypes.INT)
 
-    val columnGenerator = DbColumnSchemaGeneratingVisitor(keyspaceName, createTypes)
+    val columnGenerator = DbColumnSchemaEncodingVisitor(keyspaceName, createTypes)
 
     // Generate key columns.
     entityPath.pathEntities.forEach { pathEntity ->
@@ -83,7 +83,7 @@ internal fun encodeCreateDbAssociationType(
         .ifNotExists()
 
     // Generate key columns for use as fields in the type.
-    val columnGenerator = DbColumnSchemaGeneratingVisitor(keyspaceName, createTypes)
+    val columnGenerator = DbColumnSchemaEncodingVisitor(keyspaceName, createTypes)
     entityPathSchema.keyPath.zip(entityPathSchema.keyEntities) { keyEntityName, keyEntity ->
         val keyFields = keyEntity.fields.filter { it.isKey }
         assert(keyFields.isNotEmpty())

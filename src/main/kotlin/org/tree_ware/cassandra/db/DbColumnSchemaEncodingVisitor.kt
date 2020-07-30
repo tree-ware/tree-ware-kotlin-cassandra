@@ -12,7 +12,7 @@ import java.util.*
 
 data class ColumnSchema(val name: CqlIdentifier, val keyType: KeyType?, val dataType: DataType)
 
-class DbColumnSchemaGeneratingVisitor(
+class DbColumnSchemaEncodingVisitor(
     private val keyspaceName: String,
     private val createTypes: SortedMap<String, CreateType>
 ) : AbstractSchemaVisitor<SchemaTraversalAction>(SchemaTraversalAction.CONTINUE) {
