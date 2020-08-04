@@ -15,6 +15,7 @@ plugins {
     id("org.jetbrains.kotlin.jvm").version("1.3.72")
     id("idea")
     id("java-library")
+    id("java-test-fixtures")
 }
 
 repositories {
@@ -36,10 +37,14 @@ dependencies {
 
     implementation("org.apache.logging.log4j:log4j-api:$log4j2Version")
     implementation("org.apache.logging.log4j:log4j-core:$log4j2Version")
-    implementation("org.apache.logging.log4j:log4j-slf4j-impl:$log4j2Version")
+
+    testFixturesImplementation(project(":tree-ware-kotlin-core"))
+    testFixturesImplementation("com.datastax.oss:java-driver-query-builder:$cassandraDriverVersion")
+    testFixturesImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
 
     testImplementation(testFixtures(project(":tree-ware-kotlin-core")))
 
+    testImplementation("org.apache.logging.log4j:log4j-slf4j-impl:$log4j2Version")
     testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
 }

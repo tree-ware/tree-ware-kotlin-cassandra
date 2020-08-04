@@ -1,11 +1,12 @@
 package org.tree_ware.cassandra.schema.map
 
 import org.tree_ware.model.codec.encodeJson
+import org.tree_ware.model.getFileReader
 import org.tree_ware.schema.core.validate
-import java.io.File
 import java.io.StringWriter
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class AddressBookSchemaMapAsModelTests {
@@ -34,9 +35,9 @@ class AddressBookSchemaMapAsModelTests {
         }
         assertTrue(isEncoded)
 
-        val expectedFile = File("src/test/resources/map/address_book_db_schema_map_model.json")
-        assertTrue(expectedFile.exists())
-        val expected = expectedFile.readText()
+        val expectedFileReader = getFileReader("map/address_book_db_schema_map_model.json")
+        assertNotNull(expectedFileReader)
+        val expected = expectedFileReader.readText()
 
         val actual = jsonWriter.toString()
         assertEquals(expected, actual)
