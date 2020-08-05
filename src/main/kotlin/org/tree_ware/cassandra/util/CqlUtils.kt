@@ -1,4 +1,4 @@
-package org.tree_ware.cassandra
+package org.tree_ware.cassandra.util
 
 import com.datastax.oss.driver.api.core.CqlIdentifier
 import com.datastax.oss.driver.api.querybuilder.select.Selector

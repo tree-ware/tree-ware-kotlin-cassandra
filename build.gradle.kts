@@ -4,8 +4,9 @@ group = "org.tree-ware"
 version = "1.0-SNAPSHOT"
 
 val kotlinVersion = "1.3.72"
+val kotlinCoroutinesVersion = "1.2.2"
 
-val cassandraDriverVersion = "4.2.0"
+val cassandraDriverVersion = "4.8.0"
 
 val log4j2Version = "2.12.1"
 
@@ -29,9 +30,11 @@ tasks.withType<KotlinCompile> {
 
 dependencies {
     implementation(project(":tree-ware-kotlin-core"))
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:$kotlinCoroutinesVersion")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-jdk8:$kotlinCoroutinesVersion")
 
-    implementation("com.datastax.oss:java-driver-core:$cassandraDriverVersion")
-    implementation("com.datastax.oss:java-driver-query-builder:$cassandraDriverVersion")
+    api("com.datastax.oss:java-driver-core:$cassandraDriverVersion")
+    api("com.datastax.oss:java-driver-query-builder:$cassandraDriverVersion")
 
     implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
 

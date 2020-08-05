@@ -1,4 +1,4 @@
-package org.tree_ware.cassandra
+package org.tree_ware.cassandra.util
 
 fun getTimeSlice(shiftBitsMillisec: Int, timestampMillisec: Long): Long {
     return timestampMillisec ushr shiftBitsMillisec
