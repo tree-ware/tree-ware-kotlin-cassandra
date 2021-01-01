@@ -7,6 +7,10 @@
       },
       "value": {
         "person": {
+          "db_schema_map": {
+            "keyspace": "test_tw_address_book",
+            "table": "ab__person"
+          },
           "value": [
             {
               "db_schema_map": {
@@ -15,6 +19,10 @@
               },
               "value": {
                 "relation": {
+                  "db_schema_map": {
+                    "keyspace": "test_tw_address_book",
+                    "table": "abp__relation"
+                  },
                   "value": [
                     {
                       "db_schema_map": {
@@ -30,6 +38,10 @@
           ]
         },
         "city_info": {
+          "db_schema_map": {
+            "keyspace": "test_tw_address_book",
+            "table": "ab__city_info"
+          },
           "value": [
             {
               "db_schema_map": {

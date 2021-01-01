@@ -56,9 +56,15 @@ private fun addEntity(
         decoder.decodeKey(VALUE_KEY)
         decoder.decodeObjectStart()
     } else {
+        // The get action needs the aux at the composition list level, but the
+        // set action currently needs it at the list-element (entity) level.
+        // The set action will be updated to use the aux from the composition
+        // list level.
+        if (index == lastIndex) addAux(decoder, keyspace, entityPath.tableName)
         decoder.decodeKey(VALUE_KEY)
         decoder.decodeListStart()
         decoder.decodeObjectStart()
+        // TODO(deepak-nulu): drop aux from the list-element (entity) level.
         if (index == lastIndex) addAux(decoder, keyspace, entityPath.tableName)
         decoder.decodeKey(VALUE_KEY)
         decoder.decodeObjectStart()
