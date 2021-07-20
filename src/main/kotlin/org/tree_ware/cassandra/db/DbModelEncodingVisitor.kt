@@ -8,13 +8,13 @@ import org.tree_ware.cassandra.schema.map.DbSchemaMapAux
 import org.tree_ware.model.core.*
 import org.tree_ware.model.operator.Leader1Follower1ModelVisitor
 import org.tree_ware.schema.core.EntitySchema
-import org.tree_ware.schema.core.SchemaTraversalAction
+import org.tree_ware.common.traversal.TraversalAction
 import java.util.*
 
 private data class KeyColumn(val name: String, val value: Term)
 private data class EntityTable(val name: String, val keys: List<KeyColumn>)
 
-class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux, SchemaTraversalAction> {
+class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux, TraversalAction> {
     val commands: List<BuildableQuery> get() = _commands
     private val _commands: MutableList<BuildableQuery> = mutableListOf()
 
@@ -83,29 +83,29 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
         if (columnNamePrefixes.isEmpty()) field.schema.name
         else "\"${columnNamePrefixes.joinToString("/")}/${field.schema.name}\""
 
-    private fun addNonListField(field: FieldModel<Unit>): SchemaTraversalAction {
+    private fun addNonListField(field: FieldModel<Unit>): TraversalAction {
         val value = field.dispatch(valueEncodingVisitor)
         if (!field.schema.isKey) addColumn(getColumnName(field), raw(value))
-        return SchemaTraversalAction.CONTINUE
+        return TraversalAction.CONTINUE
     }
 
     private fun addListField(
         listField: ListFieldModel<Unit>,
         values: List<FieldModel<Unit>>
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         val value = values.joinToString(",", "{", "}") { it.dispatch(valueEncodingVisitor) }
         addColumn(getColumnName(listField), raw(value))
-        return SchemaTraversalAction.ABORT_SUB_TREE
+        return TraversalAction.ABORT_SUB_TREE
     }
 
-    override fun visit(leaderModel1: Model<Unit>, followerModel1: Model<DbSchemaMapAux>?): SchemaTraversalAction =
-        SchemaTraversalAction.CONTINUE
+    override fun visit(leaderModel1: Model<Unit>, followerModel1: Model<DbSchemaMapAux>?): TraversalAction =
+        TraversalAction.CONTINUE
 
     override fun leave(leaderModel1: Model<Unit>, followerModel1: Model<DbSchemaMapAux>?) {}
 
-    override fun visit(leaderRoot1: RootModel<Unit>, followerRoot1: RootModel<DbSchemaMapAux>?): SchemaTraversalAction {
+    override fun visit(leaderRoot1: RootModel<Unit>, followerRoot1: RootModel<DbSchemaMapAux>?): TraversalAction {
         addRow(leaderRoot1.schema.name, leaderRoot1, leaderRoot1.schema.resolvedEntity, followerRoot1?.aux)
-        return SchemaTraversalAction.CONTINUE
+        return TraversalAction.CONTINUE
     }
 
     override fun leave(leaderRoot1: RootModel<Unit>, followerRoot1: RootModel<DbSchemaMapAux>?) {
@@ -115,12 +115,12 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderEntity1: EntityModel<Unit>,
         followerEntity1: EntityModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         if (leaderEntity1.parent is CompositionListFieldModel) {
-            val dbSchemaMap = followerEntity1?.aux ?: return SchemaTraversalAction.ABORT_SUB_TREE
+            val dbSchemaMap = followerEntity1?.aux ?: return TraversalAction.ABORT_SUB_TREE
             addRow(leaderEntity1.parent.schema.name, leaderEntity1, leaderEntity1.schema, dbSchemaMap)
         }
-        return SchemaTraversalAction.CONTINUE
+        return TraversalAction.CONTINUE
     }
 
     override fun leave(leaderEntity1: EntityModel<Unit>, followerEntity1: EntityModel<DbSchemaMapAux>?) {
@@ -133,7 +133,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: PrimitiveFieldModel<Unit>,
         followerField1: PrimitiveFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         return addNonListField(leaderField1)
     }
 
@@ -142,7 +142,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: AliasFieldModel<Unit>,
         followerField1: AliasFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         return addNonListField(leaderField1)
     }
 
@@ -151,7 +151,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: EnumerationFieldModel<Unit>,
         followerField1: EnumerationFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         return addNonListField(leaderField1)
     }
 
@@ -164,7 +164,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: AssociationFieldModel<Unit>,
         followerField1: AssociationFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         return addNonListField(leaderField1)
     }
 
@@ -177,9 +177,9 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: CompositionFieldModel<Unit>,
         followerField1: CompositionFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         columnNamePrefixes.addLast(leaderField1.schema.name)
-        return SchemaTraversalAction.CONTINUE
+        return TraversalAction.CONTINUE
     }
 
     override fun leave(
@@ -192,7 +192,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: PrimitiveListFieldModel<Unit>,
         followerField1: PrimitiveListFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         return addListField(leaderField1, leaderField1.primitives)
     }
 
@@ -205,7 +205,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: AliasListFieldModel<Unit>,
         followerField1: AliasListFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         return addListField(leaderField1, leaderField1.aliases)
     }
 
@@ -214,7 +214,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: EnumerationListFieldModel<Unit>,
         followerField1: EnumerationListFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         return addListField(leaderField1, leaderField1.enumerations)
     }
 
@@ -227,7 +227,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: AssociationListFieldModel<Unit>,
         followerField1: AssociationListFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction {
+    ): TraversalAction {
         return addListField(leaderField1, leaderField1.associations)
     }
 
@@ -240,7 +240,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun visit(
         leaderField1: CompositionListFieldModel<Unit>,
         followerField1: CompositionListFieldModel<DbSchemaMapAux>?
-    ): SchemaTraversalAction = SchemaTraversalAction.CONTINUE
+    ): TraversalAction = TraversalAction.CONTINUE
 
     override fun leave(
         leaderField1: CompositionListFieldModel<Unit>,
