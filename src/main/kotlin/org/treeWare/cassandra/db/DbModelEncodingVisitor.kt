@@ -5,10 +5,10 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder.*
 import com.datastax.oss.driver.api.querybuilder.insert.RegularInsert
 import com.datastax.oss.driver.api.querybuilder.term.Term
 import org.treeWare.cassandra.schema.map.DbSchemaMapAux
+import org.treeWare.common.traversal.TraversalAction
 import org.treeWare.model.core.*
 import org.treeWare.model.operator.Leader1Follower1ModelVisitor
 import org.treeWare.schema.core.EntitySchema
-import org.treeWare.common.traversal.TraversalAction
 import java.util.*
 
 private data class KeyColumn(val name: String, val value: Term)
@@ -130,6 +130,8 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
         }
     }
 
+    // Scalar fields
+
     override fun visit(
         leaderField1: PrimitiveFieldModel<Unit>,
         followerField1: PrimitiveFieldModel<DbSchemaMapAux>?
@@ -189,6 +191,8 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
         columnNamePrefixes.pollLast()
     }
 
+    // List fields
+
     override fun visit(
         leaderField1: PrimitiveListFieldModel<Unit>,
         followerField1: PrimitiveListFieldModel<DbSchemaMapAux>?
@@ -245,6 +249,19 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
     override fun leave(
         leaderField1: CompositionListFieldModel<Unit>,
         followerField1: CompositionListFieldModel<DbSchemaMapAux>?
+    ) {
+    }
+
+    // Field values
+
+    override fun visit(
+        leaderField1: EntityKeysModel<Unit>,
+        followerField1: EntityKeysModel<DbSchemaMapAux>?
+    ): TraversalAction = TraversalAction.CONTINUE
+
+    override fun leave(
+        leaderField1: EntityKeysModel<Unit>,
+        followerField1: EntityKeysModel<DbSchemaMapAux>?
     ) {
     }
 }
