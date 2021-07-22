@@ -8,6 +8,7 @@ import org.treeWare.cassandra.schema.map.DbSchemaMapAux
 import org.treeWare.common.traversal.TraversalAction
 import org.treeWare.model.core.*
 import org.treeWare.model.operator.Leader1Follower1ModelVisitor
+import org.treeWare.model.operator.dispatchVisit
 import org.treeWare.schema.core.EntitySchema
 import java.util.*
 
@@ -84,7 +85,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
         else "\"${columnNamePrefixes.joinToString("/")}/${field.schema.name}\""
 
     private fun addNonListField(field: FieldModel<Unit>): TraversalAction {
-        val value = field.dispatch(valueEncodingVisitor)
+        val value = dispatchVisit(field, valueEncodingVisitor) ?: ""
         if (!field.schema.isKey) addColumn(getColumnName(field), raw(value))
         return TraversalAction.CONTINUE
     }
@@ -93,7 +94,7 @@ class DbModelEncodingVisitor : Leader1Follower1ModelVisitor<Unit, DbSchemaMapAux
         listField: ListFieldModel<Unit>,
         values: List<FieldModel<Unit>>
     ): TraversalAction {
-        val value = values.joinToString(",", "{", "}") { it.dispatch(valueEncodingVisitor) }
+        val value = values.joinToString(",", "{", "}") { dispatchVisit(it, valueEncodingVisitor) ?: "" }
         addColumn(getColumnName(listField), raw(value))
         return TraversalAction.ABORT_SUB_TREE
     }
