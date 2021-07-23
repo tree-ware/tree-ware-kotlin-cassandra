@@ -3,17 +3,14 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 group = "org.tree-ware"
 version = "1.0-SNAPSHOT"
 
-val kotlinVersion = "1.3.72"
-val kotlinCoroutinesVersion = "1.2.2"
+val kotlinCoroutinesVersion = "1.5.0"
 
 val cassandraDriverVersion = "4.8.0"
 
-val log4j2Version = "2.12.1"
-
-val junitVersion = "5.4.2"
+val log4j2Version = "2.14.1"
 
 plugins {
-    id("org.jetbrains.kotlin.jvm").version("1.3.72")
+    id("org.jetbrains.kotlin.jvm").version("1.5.21")
     id("idea")
     id("java-library")
     id("java-test-fixtures")
@@ -36,22 +33,21 @@ dependencies {
     api("com.datastax.oss:java-driver-core:$cassandraDriverVersion")
     api("com.datastax.oss:java-driver-query-builder:$cassandraDriverVersion")
 
-    implementation("org.jetbrains.kotlin:kotlin-stdlib:$kotlinVersion")
+    implementation(kotlin("stdlib"))
 
     implementation("org.apache.logging.log4j:log4j-api:$log4j2Version")
     implementation("org.apache.logging.log4j:log4j-core:$log4j2Version")
 
     testFixturesImplementation(project(":tree-ware-kotlin-core"))
     testFixturesImplementation("com.datastax.oss:java-driver-query-builder:$cassandraDriverVersion")
-    testFixturesImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
+    testFixturesImplementation(kotlin("test"))
 
     testImplementation(testFixtures(project(":tree-ware-kotlin-core")))
 
     testImplementation("org.apache.logging.log4j:log4j-slf4j-impl:$log4j2Version")
-    testImplementation("org.jetbrains.kotlin:kotlin-test-junit5:$kotlinVersion")
-    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
+    testImplementation(kotlin("test"))
 }
 
-tasks.withType<Test> {
+tasks.test {
     useJUnitPlatform()
 }
