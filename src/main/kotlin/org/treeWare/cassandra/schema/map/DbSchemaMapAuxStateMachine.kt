@@ -1,8 +1,8 @@
 package org.treeWare.cassandra.schema.map
 
 import org.treeWare.common.codec.AbstractDecodingStateMachine
-import org.treeWare.model.codec.decoding_state_machine.AuxDecodingStateMachine
-import org.treeWare.model.codec.decoding_state_machine.DecodingStack
+import org.treeWare.model.codec.decoder.stateMachine.AuxDecodingStateMachine
+import org.treeWare.model.codec.decoder.stateMachine.DecodingStack
 
 class DbSchemaMapAuxStateMachine(
     private val stack: DecodingStack
