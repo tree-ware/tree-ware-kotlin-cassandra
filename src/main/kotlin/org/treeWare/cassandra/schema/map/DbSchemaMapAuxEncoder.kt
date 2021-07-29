@@ -6,10 +6,11 @@ import org.treeWare.model.codec.aux_encoder.AuxEncoder
 private const val AUX_KEY = "db_schema_map"
 
 class DbSchemaMapAuxEncoder : AuxEncoder {
-    override fun encode(aux: Any?, wireFormatEncoder: WireFormatEncoder) {
+    override fun encode(fieldName: String?, aux: Any?, wireFormatEncoder: WireFormatEncoder) {
         assert(aux is DbSchemaMapAux?)
         (aux as? DbSchemaMapAux?)?.also {
-            wireFormatEncoder.encodeObjectStart(AUX_KEY)
+            val auxFieldName = wireFormatEncoder.getAuxFieldName(fieldName, AUX_KEY)
+            wireFormatEncoder.encodeObjectStart(auxFieldName)
             wireFormatEncoder.encodeStringField("keyspace", it.keyspace)
             wireFormatEncoder.encodeStringField("table", it.table)
             wireFormatEncoder.encodeObjectEnd()
