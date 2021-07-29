@@ -1,58 +1,46 @@
 {
   "db_schema_map": {
+    "address_book__db_schema_map_": {
+      "keyspace": "test_tw_address_book",
+      "table": "address_book"
+    },
     "address_book": {
-      "db_schema_map": {
+      "person__db_schema_map_": {
         "keyspace": "test_tw_address_book",
-        "table": "address_book"
+        "table": "ab__person"
       },
-      "value": {
-        "person": {
-          "db_schema_map": {
+      "person": [
+        {
+          "db_schema_map_": {
             "keyspace": "test_tw_address_book",
             "table": "ab__person"
           },
-          "value": [
+          "relation__db_schema_map_": {
+            "keyspace": "test_tw_address_book",
+            "table": "abp__relation"
+          },
+          "relation": [
             {
-              "db_schema_map": {
+              "db_schema_map_": {
                 "keyspace": "test_tw_address_book",
-                "table": "ab__person"
-              },
-              "value": {
-                "relation": {
-                  "db_schema_map": {
-                    "keyspace": "test_tw_address_book",
-                    "table": "abp__relation"
-                  },
-                  "value": [
-                    {
-                      "db_schema_map": {
-                        "keyspace": "test_tw_address_book",
-                        "table": "abp__relation"
-                      },
-                      "value": {}
-                    }
-                  ]
-                }
+                "table": "abp__relation"
               }
             }
           ]
-        },
-        "city_info": {
-          "db_schema_map": {
+        }
+      ],
+      "city_info__db_schema_map_": {
+        "keyspace": "test_tw_address_book",
+        "table": "ab__city_info"
+      },
+      "city_info": [
+        {
+          "db_schema_map_": {
             "keyspace": "test_tw_address_book",
             "table": "ab__city_info"
-          },
-          "value": [
-            {
-              "db_schema_map": {
-                "keyspace": "test_tw_address_book",
-                "table": "ab__city_info"
-              },
-              "value": {}
-            }
-          ]
+          }
         }
-      }
+      ]
     }
   }
 }

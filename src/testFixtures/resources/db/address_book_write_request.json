@@ -7,9 +7,15 @@
         "last_name_first": true,
         "encrypt_hero_name": false,
         "card_colors": [
-          "orange",
-          "green",
-          "blue"
+          {
+            "value": "orange"
+          },
+          {
+            "value": "green"
+          },
+          {
+            "value": "blue"
+          }
         ]
       },
       "person": [
@@ -19,8 +25,12 @@
           "last_name": "Kent",
           "hero_name": "Superman",
           "email": [
-            "clark.kent@dailyplanet.com",
-            "superman@dc.com"
+            {
+              "value": "clark.kent@dailyplanet.com"
+            },
+            {
+              "value": "superman@dc.com"
+            }
           ],
           "relation": [
             {
@@ -41,7 +51,9 @@
           "last_name": "Lane",
           "id": "a8aacf55-7810-4b43-afe5-4344f25435fd",
           "email": [
-            "lois.lane@dailyplanet.com"
+            {
+              "value": "lois.lane@dailyplanet.com"
+            }
           ],
           "relation": [
             {
