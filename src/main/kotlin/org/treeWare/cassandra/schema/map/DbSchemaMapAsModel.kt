@@ -1,6 +1,6 @@
 package org.treeWare.cassandra.schema.map
 
-import org.treeWare.model.codec.decoding_state_machine.ModelDecodingStateMachine
+import org.treeWare.model.codec.decoder.stateMachine.ModelDecodingStateMachine
 import org.treeWare.model.core.MutableModel
 
 const val DB_SCHEMA_MAP_MODEL_TYPE = "db_schema_map"

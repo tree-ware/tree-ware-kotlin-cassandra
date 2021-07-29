@@ -1,7 +1,7 @@
 package org.treeWare.cassandra.schema.map
 
 import org.treeWare.common.codec.WireFormatEncoder
-import org.treeWare.model.codec.aux_encoder.AuxEncoder
+import org.treeWare.model.codec.encoder.AuxEncoder
 
 private const val AUX_KEY = "db_schema_map"
 
