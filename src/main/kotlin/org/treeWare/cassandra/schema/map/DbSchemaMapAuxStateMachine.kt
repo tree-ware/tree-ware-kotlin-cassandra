@@ -18,6 +18,7 @@ class DbSchemaMapAuxStateMachine(
     }
 
     override fun decodeStringValue(value: String): Boolean {
+        println("DbSchemaMapAuxStateMachine decodeStringValue() value: $value aux: $aux")
         when (keyName) {
             "keyspace" -> aux?.keyspace = value
             "table" -> aux?.table = value
