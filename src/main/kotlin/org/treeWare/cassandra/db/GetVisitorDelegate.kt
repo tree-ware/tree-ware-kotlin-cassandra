@@ -25,9 +25,6 @@ class GetVisitorDelegate(private val cqlSession: CqlSession) : CompositionTableG
         requestFieldNames: List<String>,
         mappingAux: DbSchemaMapAux
     ) {
-        println("#### fetchRoot() mappingAux: $mappingAux")
-        println("#### fetchRoot() requestFieldNames: $requestFieldNames")
-
         val quotedFieldNames = requestFieldNames.map { doubleQuote(it) }
         val select = selectFrom(mappingAux.keyspace, mappingAux.table)
             .columns(quotedFieldNames)
@@ -42,7 +39,6 @@ class GetVisitorDelegate(private val cqlSession: CqlSession) : CompositionTableG
         requestFieldNames: List<String>,
         mappingAux: DbSchemaMapAux
     ) {
-        println("#### fetchCompositionList() mappingAux: $mappingAux")
     }
 
     private fun populateEntityFromRow(fieldNames: List<String>, entity: MutableBaseEntityModel<Unit>, row: Row) {
