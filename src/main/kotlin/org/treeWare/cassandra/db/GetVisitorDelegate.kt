@@ -9,11 +9,8 @@ import org.treeWare.cassandra.schema.map.DbSchemaMapAux
 import org.treeWare.model.action.CompositionTableGetVisitorDelegate
 import org.treeWare.model.core.*
 import org.treeWare.schema.core.*
-import java.util.*
 
 class GetVisitorDelegate(private val cqlSession: CqlSession) : CompositionTableGetVisitorDelegate<DbSchemaMapAux> {
-    private val pathEntities = ArrayDeque<BaseEntityModel<*>>()
-
     override fun pushPathEntity(entity: BaseEntityModel<*>, entitySchema: EntitySchema) {
     }
 
@@ -35,7 +32,7 @@ class GetVisitorDelegate(private val cqlSession: CqlSession) : CompositionTableG
     }
 
     override suspend fun fetchCompositionList(
-        responseListField: MutableCompositionListFieldModel<Unit>,
+        responseListField: MutableListFieldModel<Unit>,
         requestFieldNames: List<String>,
         mappingAux: DbSchemaMapAux
     ) {
@@ -58,35 +55,38 @@ class GetVisitorDelegate(private val cqlSession: CqlSession) : CompositionTableG
         if (fieldPath.isEmpty()) return
         val firstName = fieldPath.first()
         if (fieldPath.size > 1) {
-            val childEntity = entity.getOrNewCompositionField(firstName)?.value ?: return
+            val childField = entity.getOrNewField(firstName) as? MutableSingleFieldModel?
+            val childEntity = childField?.value as? MutableEntityModel ?: return
             return populateScalarFieldFromRow(fieldPath.drop(1), childEntity, column, row)
         }
-        val field = entity.getOrNewScalarField(firstName) ?: return
+        val field = entity.getOrNewField(firstName) as? MutableSingleFieldModel ?: return
+        val value = field.getOrNewValue() as? MutableScalarValueModel ?: return
         val primitiveSchema = getPrimitiveSchema(field) ?: return
         when (primitiveSchema) {
-            is BooleanSchema -> field.setValue(row.getBoolean(column))
+            is BooleanSchema -> value.setValue(row.getBoolean(column))
             is ByteSchema,
             is ShortSchema,
             is IntSchema,
             is LongSchema,
             is FloatSchema,
-            is DoubleSchema -> row.getBigDecimal(column)?.also { field.setValue(it) }
+            is DoubleSchema -> row.getBigDecimal(column)?.also { value.setValue(it) }
             is StringSchema,
             is Password1WaySchema,
-            is Password2WaySchema -> row.getString(column)?.also { field.setValue(it) }
-            is UuidSchema -> row.getUuid(column)?.also { field.setValue(it.toString()) }
-            is BlobSchema -> row.getByteBuffer(column)?.also { field.setValue(it.toString()) }
-            is TimestampSchema -> row.getInstant(column)?.also { field.setValue(it.toEpochMilli().toString()) }
-            else -> row.getString(column)?.also { field.setValue(it) }
+            is Password2WaySchema -> row.getString(column)?.also { value.setValue(it) }
+            is UuidSchema -> row.getUuid(column)?.also { value.setValue(it.toString()) }
+            is BlobSchema -> row.getByteBuffer(column)?.also { value.setValue(it.toString()) }
+            is TimestampSchema -> row.getInstant(column)?.also { value.setValue(it.toEpochMilli().toString()) }
+            else -> row.getString(column)?.also { value.setValue(it) }
         }
     }
 
-    private fun getPrimitiveSchema(field: MutableScalarFieldModel<Unit>): PrimitiveSchema? = when (field) {
-        is MutablePrimitiveFieldModel -> field.schema.primitive
-        is MutableAliasFieldModel -> field.schema.resolvedAlias.primitive
-        is MutableEnumerationFieldModel -> MutableStringSchema()
-        else -> null
-    }
+    private fun getPrimitiveSchema(field: MutableSingleFieldModel<Unit>): PrimitiveSchema? =
+        when (val fieldSchema = field.schema) {
+            is PrimitiveFieldSchema -> fieldSchema.primitive
+            is AliasFieldSchema -> fieldSchema.resolvedAlias.primitive
+            is EnumerationFieldSchema -> MutableStringSchema()
+            else -> null
+        }
 
     private fun doubleQuote(string: String): String = "\"$string\""
 }

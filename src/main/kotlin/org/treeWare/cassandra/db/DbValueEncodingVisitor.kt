@@ -1,5 +1,6 @@
 package org.treeWare.cassandra.db
 
+import org.treeWare.model.action.isCompositionField
 import org.treeWare.model.core.*
 import org.treeWare.model.operator.AbstractLeader1Follower0ModelVisitor
 import org.treeWare.model.operator.dispatchVisit
@@ -8,16 +9,16 @@ import org.treeWare.schema.core.*
 // Wrap returned values in QueryBuilder.raw()
 
 class DbValueEncodingVisitor : AbstractLeader1Follower0ModelVisitor<Unit, String>("") {
-    override fun visit(leaderField1: PrimitiveFieldModel<Unit>): String =
-        getRawValue(leaderField1.schema.primitive, leaderField1.value)
+    override fun visit(leaderValue1: PrimitiveModel<Unit>): String =
+        getRawValue(leaderValue1.schema.primitive, leaderValue1.value)
 
-    override fun visit(leaderField1: AliasFieldModel<Unit>): String =
-        getRawValue(leaderField1.schema.resolvedAlias.primitive, leaderField1.value)
+    override fun visit(leaderValue1: AliasModel<Unit>): String =
+        getRawValue(leaderValue1.schema.resolvedAlias.primitive, leaderValue1.value)
 
-    override fun visit(leaderField1: EnumerationFieldModel<Unit>): String = "'${leaderField1.value?.name}'"
+    override fun visit(leaderValue1: EnumerationModel<Unit>): String = "'${leaderValue1.value?.name}'"
 
-    override fun visit(leaderField1: AssociationFieldModel<Unit>): String =
-        leaderField1.schema.keyPath.zip(leaderField1.value) { keyEntityName, entityKeys ->
+    override fun visit(leaderValue1: AssociationModel<Unit>): String =
+        leaderValue1.schema.keyPath.zip(leaderValue1.value) { keyEntityName, entityKeys ->
             entityKeys.fields.flatMap {
                 getKeyValueList(keyEntityName, it, this) { key, value -> "$key:$value" }
             }
@@ -31,15 +32,18 @@ internal fun <T> getKeyValueList(
     valueEncodingVisitor: DbValueEncodingVisitor,
     transform: (key: String, value: String) -> T
 ): List<T> =
-    if (keyField is CompositionFieldModel) {
-        keyField.value.fields.filter { it.schema.isKey }.map { nestedKey ->
+    if (isCompositionField(keyField)) {
+        val entity = (keyField as SingleFieldModel).value as EntityModel
+        entity.fields.filter { it.schema.isKey }.map { nestedKey ->
             val keyName = "\"/$entityName/${keyField.schema.name}/${nestedKey.schema.name}\""
-            val keyValue = dispatchVisit(nestedKey, valueEncodingVisitor) ?: ""
+            val nestedKeyValue = (nestedKey as? SingleFieldModel<Unit>)?.value
+            val keyValue = nestedKeyValue?.let { dispatchVisit(it, valueEncodingVisitor) } ?: ""
             transform(keyName, keyValue)
         }
     } else {
         val keyName = "\"/$entityName/${keyField.schema.name}\""
-        val keyValue = dispatchVisit(keyField, valueEncodingVisitor) ?: ""
+        val keyFieldValue = (keyField as? SingleFieldModel<Unit>)?.value
+        val keyValue = keyFieldValue?.let { dispatchVisit(it, valueEncodingVisitor) } ?: ""
         listOf(transform(keyName, keyValue))
     }
 
